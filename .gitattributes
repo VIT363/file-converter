@@ -1,2 +1,10 @@
 /mvnw text eol=lf
+* text=auto
+*.java text
+*.xml text
+*.properties text
+*.yml text
+*.sql text
+*.sh text eol=lf
+*.bat text eol=crlf
 *.cmd text eol=crlf
