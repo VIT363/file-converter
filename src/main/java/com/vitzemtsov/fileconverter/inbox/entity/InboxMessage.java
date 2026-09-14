@@ -45,6 +45,7 @@ public class InboxMessage {
     @Column(name = "last_error", length = 1000)
     private String lastError;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "failure_type")
     private FailureType failureType;
 }

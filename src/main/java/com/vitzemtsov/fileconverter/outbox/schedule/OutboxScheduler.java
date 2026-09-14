@@ -21,7 +21,7 @@ public class OutboxScheduler {
     private final OutboxMessageRepository outboxRepository;
     private final KafkaTemplate<@NonNull String,@NonNull String> kafkaTemplate;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelayString = "${app.outbox.fixed-delay}")
     public void publish() {
 
         List<OutboxMessage> messages = outboxRepository.findTop100ByStatusOrderByCreatedAtAsc(OutboxStatus.NEW);

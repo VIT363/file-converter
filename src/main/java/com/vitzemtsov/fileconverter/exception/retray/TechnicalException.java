@@ -1,4 +1,6 @@
-package com.vitzemtsov.fileconverter.exception;
+package com.vitzemtsov.fileconverter.exception.retray;
+
+import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
 
 public class TechnicalException extends FileConverterException {
 

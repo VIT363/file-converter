@@ -1,10 +1,10 @@
 package com.vitzemtsov.fileconverter.service;
 
 import com.vitzemtsov.fileconverter.converter.ConverterService;
-import com.vitzemtsov.fileconverter.exception.FileConverterException;
-import com.vitzemtsov.fileconverter.exception.TechnicalException;
+import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
+import com.vitzemtsov.fileconverter.exception.retray.TechnicalException;
 import com.vitzemtsov.fileconverter.minio.service.MinioService;
-import com.vitzemtsov.fileconverter.outbox.service.OutboxService;
+import com.vitzemtsov.fileconverter.outbox.dto.PdfConvertedEvent;
 import com.vitzemtsov.fileconverter.minio.ObjectNameDecoder;
 import com.vitzemtsov.fileconverter.converter.util.PdfName;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +21,11 @@ public class FileProcessingService {
 
     private final ConverterService converterService;
     private final MinioService minioService;
-    private final OutboxService outboxService;
 
     @Value("${minio.result-bucket:pdf-files}")
     private String resultBucket;
 
-    public void processAndConvert(String bucketName, String objectName, String eventId) {
+    public PdfConvertedEvent processAndConvert(String bucketName, String objectName, String eventId) {
 
         try {
             String decodedName = ObjectNameDecoder.decode(objectName);
@@ -39,7 +38,7 @@ public class FileProcessingService {
 
                 minioService.uploadFile(resultBucket, pdfObjectName, pdf);
 
-                outboxService.createSuccessEvent(eventId, resultBucket, pdfObjectName);
+                return new PdfConvertedEvent(resultBucket, pdfObjectName, eventId);
             }
 
         } catch (FileConverterException e) {

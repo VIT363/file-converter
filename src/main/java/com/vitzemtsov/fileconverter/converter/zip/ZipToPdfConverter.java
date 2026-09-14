@@ -1,6 +1,8 @@
 package com.vitzemtsov.fileconverter.converter.zip;
 
 import com.vitzemtsov.fileconverter.converter.interfaces.FileToPdfStrategy;
+import com.vitzemtsov.fileconverter.converter.util.FileType;
+import com.vitzemtsov.fileconverter.exception.retray.special.ConversionException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.pdfbox.io.RandomAccessReadBuffer;
@@ -23,7 +25,7 @@ public class ZipToPdfConverter implements FileToPdfStrategy {
 
     @Override
     public boolean supports(String fileName) {
-        return fileName.toLowerCase().endsWith(".zip");
+        return supportsAny(fileName, FileType.ZIP);
     }
 
     @Override
@@ -47,21 +49,24 @@ public class ZipToPdfConverter implements FileToPdfStrategy {
             }
             return mergePdfs(pdfs);
         } catch (IOException e) {
-            throw new IllegalStateException("ошибка конвертации ZIP в PDF ", e);
+            throw new ConversionException("ошибка конвертации ZIP в PDF: " + fileName, e);
         }
     }
 
-    private byte[] mergePdfs(List<byte[]> pdfs) throws IOException {
+    private byte[] mergePdfs(List<byte[]> pdfs) {
         PDFMergerUtility merger = new PDFMergerUtility();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        for (byte[] pdf : pdfs) {
-            merger.addSource(new RandomAccessReadBuffer(pdf));
+        try {
+            for (byte[] pdf : pdfs) {
+                merger.addSource(new RandomAccessReadBuffer(pdf));
+            }
+            merger.setDestinationStream(output);
+            merger.mergeDocuments(null);
+            return output.toByteArray();
+
+        } catch (IOException e) {
+            throw new ConversionException("Ошибка склейки PDF файлов", e);
         }
-
-        merger.setDestinationStream(output);
-        merger.mergeDocuments(null);
-
-        return output.toByteArray();
     }
 }

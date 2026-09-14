@@ -1,3 +1,8 @@
+app:
+  outbox:
+    fixed-delay: 1000
+  pdf:
+    font-path: classpath:fonts/arialmt.ttf
 spring:
   liquibase:
     enabled: true

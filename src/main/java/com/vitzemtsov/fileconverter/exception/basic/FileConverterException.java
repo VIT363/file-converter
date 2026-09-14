@@ -1,4 +1,4 @@
-package com.vitzemtsov.fileconverter.exception;
+package com.vitzemtsov.fileconverter.exception.basic;
 
 public abstract class FileConverterException extends RuntimeException {
 

@@ -1,6 +1,8 @@
 package com.vitzemtsov.fileconverter.converter.image;
 
 import com.vitzemtsov.fileconverter.converter.interfaces.FileToPdfStrategy;
+import com.vitzemtsov.fileconverter.converter.util.FileType;
+import com.vitzemtsov.fileconverter.exception.retray.special.ConversionException;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -11,15 +13,13 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Locale;
 
 @Component
 public class ImageToPdfConverter implements FileToPdfStrategy {
 
     @Override
     public boolean supports(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg");
+        return supportsAny(fileName, FileType.PNG, FileType.JPG, FileType.JPEG);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ImageToPdfConverter implements FileToPdfStrategy {
             return output.toByteArray();
 
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка конвертации IMAGE в PDF", e);
+            throw new ConversionException("Ошибка конвертации IMAGE в PDF: " + fileName, e);
         }
     }
 }

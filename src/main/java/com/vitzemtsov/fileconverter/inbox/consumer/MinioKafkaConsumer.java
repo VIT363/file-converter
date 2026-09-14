@@ -1,13 +1,16 @@
 package com.vitzemtsov.fileconverter.inbox.consumer;
 
+import com.vitzemtsov.fileconverter.exception.no_retray.ConfigurationException;
 import com.vitzemtsov.fileconverter.inbox.dto.MinioNotification;
 import com.vitzemtsov.fileconverter.inbox.enums.FailureType;
-import com.vitzemtsov.fileconverter.exception.FileConverterException;
-import com.vitzemtsov.fileconverter.exception.TechnicalException;
-import com.vitzemtsov.fileconverter.exception.UnsupportedFormatException;
+import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
+import com.vitzemtsov.fileconverter.exception.retray.TechnicalException;
+import com.vitzemtsov.fileconverter.exception.no_retray.UnsupportedFormatException;
 import com.vitzemtsov.fileconverter.inbox.enums.InboxStatus;
 import com.vitzemtsov.fileconverter.inbox.entity.InboxMessage;
 import com.vitzemtsov.fileconverter.inbox.repository.InboxMessageRepository;
+import com.vitzemtsov.fileconverter.inbox.service.InboxCompletionService;
+import com.vitzemtsov.fileconverter.outbox.dto.PdfConvertedEvent;
 import com.vitzemtsov.fileconverter.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +27,12 @@ public class MinioKafkaConsumer {
 
     private final FileProcessingService fileProcessingService;
     private final InboxMessageRepository inboxRepository;
+    private final InboxCompletionService inboxCompletionService;
 
     @KafkaListener(topics = "input-events")
     public void consume(MinioNotification notification) {
 
-        if (notification.getRecords() == null || notification.getRecords().isEmpty()) {
+        if (notification == null || notification.getRecords() == null || notification.getRecords().isEmpty()) {
 
             log.warn("Получено пустое уведомление, игнорируем");
             return;
@@ -60,10 +64,9 @@ public class MinioKafkaConsumer {
         InboxMessage inbox = existing.orElseGet(() -> createInboxMessage(record, eventId));
 
         try {
+            PdfConvertedEvent result = fileProcessingService.processAndConvert(bucketName, objectName, eventId);
 
-            fileProcessingService.processAndConvert(bucketName, objectName, eventId);
-
-            markProcessed(inbox);
+            inboxCompletionService.complete(inbox, result.bucketName(), result.objectName(), result.eventId());
 
             log.info("Файл успешно обработан: bucket={}, object={}, eventId={}", bucketName, objectName, eventId);
 
@@ -79,6 +82,11 @@ public class MinioKafkaConsumer {
 
             markFailed(inbox, e);
             throw e;
+        } catch (
+                ConfigurationException e) {
+            log.error("Ошибка конфигурации: {}", e.getMessage());
+
+            markFailed(inbox, e);
         }
     }
 
@@ -94,23 +102,19 @@ public class MinioKafkaConsumer {
         return inboxRepository.save(message);
     }
 
-    private void markProcessed(InboxMessage inbox) {
-
-        inbox.setStatus(InboxStatus.PROCESSED);
-        inbox.setProcessedAt(LocalDateTime.now());
-        inbox.setFailureType(null);
-        inbox.setLastError(null);
-
-        inboxRepository.save(inbox);
-    }
-
     private void markFailed(InboxMessage inbox, FileConverterException exception) {
 
         inbox.setStatus(InboxStatus.FAILED);
         inbox.setLastError(exception.getMessage());
 
-        inbox.setFailureType(exception instanceof UnsupportedFormatException ? FailureType.BUSINESS : FailureType.TECHNICAL);
+        FailureType type;
+        if (exception instanceof UnsupportedFormatException || exception instanceof ConfigurationException) {
+            type = FailureType.BUSINESS;
+        } else {
+            type = FailureType.TECHNICAL;
+        }
 
+        inbox.setFailureType(type);
         inboxRepository.save(inbox);
     }
 }

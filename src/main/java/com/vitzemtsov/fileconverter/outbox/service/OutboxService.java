@@ -8,7 +8,6 @@ import com.vitzemtsov.fileconverter.outbox.repository.OutboxMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +21,6 @@ public class OutboxService {
     @Value("${kafka.topics.output-events:output-events}")
     private String outputTopic;
 
-    @Transactional
     public void createSuccessEvent(String eventId, String bucketName, String objectName) {
 
         PdfConvertedEvent event = new PdfConvertedEvent(bucketName, objectName, eventId);
