@@ -1,0 +1,58 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: create-inbox-messages-table
+      author: vitzemtsov
+      changes:
+
+        - createTable:
+            tableName: inbox_messages
+            columns:
+
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: event_id
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: event_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: processing_started_at
+                  type: timestamp
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: processed_at
+                  type: timestamp
+
+              - column:
+                  name: failure_type
+                  type: VARCHAR(30)
+
+              - column:
+                  name: last_error
+                  type: VARCHAR(1000)
