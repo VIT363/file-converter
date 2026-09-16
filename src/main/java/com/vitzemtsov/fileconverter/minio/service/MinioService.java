@@ -1,6 +1,6 @@
 package com.vitzemtsov.fileconverter.minio.service;
 
-import com.vitzemtsov.fileconverter.exception.retray.TechnicalException;
+import com.vitzemtsov.fileconverter.exception.retrayable.TechnicalException;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;

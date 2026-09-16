@@ -1,7 +1,7 @@
 package com.vitzemtsov.fileconverter.converter;
 
 import com.vitzemtsov.fileconverter.converter.interfaces.FileToPdfStrategy;
-import com.vitzemtsov.fileconverter.exception.no_retray.UnsupportedFormatException;
+import com.vitzemtsov.fileconverter.exception.nonretryable.UnsupportedFormatException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

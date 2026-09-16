@@ -3,8 +3,9 @@ package com.vitzemtsov.fileconverter.converter.txt;
 import com.vitzemtsov.fileconverter.config.AppProperties;
 import com.vitzemtsov.fileconverter.converter.interfaces.FileToPdfStrategy;
 import com.vitzemtsov.fileconverter.converter.util.FileType;
-import com.vitzemtsov.fileconverter.exception.no_retray.ConfigurationException;
-import com.vitzemtsov.fileconverter.exception.retray.special.ConversionException;
+import com.vitzemtsov.fileconverter.exception.nonretryable.ConfigurationException;
+import com.vitzemtsov.fileconverter.exception.retrayable.special.ConversionException;
+import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -21,6 +22,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 @Component
+@RequiredArgsConstructor
 public class TxtToPdfConverter implements FileToPdfStrategy {
 
     private static final float MARGIN_LEFT = 50;
@@ -30,11 +32,6 @@ public class TxtToPdfConverter implements FileToPdfStrategy {
 
     private final AppProperties appProperties;
     private final ResourceLoader resourceLoader;
-
-    public TxtToPdfConverter(AppProperties appProperties, ResourceLoader resourceLoader) {
-        this.appProperties = appProperties;
-        this.resourceLoader = resourceLoader;
-    }
 
     @Override
     public boolean supports(String fileName) {

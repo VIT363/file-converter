@@ -2,7 +2,7 @@ package com.vitzemtsov.fileconverter.converter.image;
 
 import com.vitzemtsov.fileconverter.converter.interfaces.FileToPdfStrategy;
 import com.vitzemtsov.fileconverter.converter.util.FileType;
-import com.vitzemtsov.fileconverter.exception.retray.special.ConversionException;
+import com.vitzemtsov.fileconverter.exception.retrayable.special.ConversionException;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;

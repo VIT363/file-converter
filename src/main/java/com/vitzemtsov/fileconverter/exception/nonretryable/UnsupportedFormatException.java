@@ -1,4 +1,4 @@
-package com.vitzemtsov.fileconverter.exception.no_retray;
+package com.vitzemtsov.fileconverter.exception.nonretryable;
 
 import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
 

@@ -2,7 +2,7 @@ package com.vitzemtsov.fileconverter.service;
 
 import com.vitzemtsov.fileconverter.converter.ConverterService;
 import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
-import com.vitzemtsov.fileconverter.exception.retray.TechnicalException;
+import com.vitzemtsov.fileconverter.exception.retrayable.TechnicalException;
 import com.vitzemtsov.fileconverter.minio.service.MinioService;
 import com.vitzemtsov.fileconverter.outbox.dto.PdfConvertedEvent;
 import com.vitzemtsov.fileconverter.minio.ObjectNameDecoder;

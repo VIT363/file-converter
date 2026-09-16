@@ -1,4 +1,4 @@
-package com.vitzemtsov.fileconverter.exception.retray;
+package com.vitzemtsov.fileconverter.exception.retrayable;
 
 import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
 

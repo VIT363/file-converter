@@ -1,11 +1,11 @@
 package com.vitzemtsov.fileconverter.inbox.consumer;
 
-import com.vitzemtsov.fileconverter.exception.no_retray.ConfigurationException;
+import com.vitzemtsov.fileconverter.exception.nonretryable.ConfigurationException;
 import com.vitzemtsov.fileconverter.inbox.dto.MinioNotification;
 import com.vitzemtsov.fileconverter.inbox.enums.FailureType;
 import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
-import com.vitzemtsov.fileconverter.exception.retray.TechnicalException;
-import com.vitzemtsov.fileconverter.exception.no_retray.UnsupportedFormatException;
+import com.vitzemtsov.fileconverter.exception.retrayable.TechnicalException;
+import com.vitzemtsov.fileconverter.exception.nonretryable.UnsupportedFormatException;
 import com.vitzemtsov.fileconverter.inbox.enums.InboxStatus;
 import com.vitzemtsov.fileconverter.inbox.entity.InboxMessage;
 import com.vitzemtsov.fileconverter.inbox.repository.InboxMessageRepository;
