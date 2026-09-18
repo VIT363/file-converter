@@ -3,7 +3,14 @@ app:
     fixed-delay: 1000
   pdf:
     font-path: classpath:fonts/arialmt.ttf
+
+server:
+  port: 8080
+
 spring:
+  application:
+    name: file-converter
+
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -49,7 +56,28 @@ minio:
 logging:
   level:
     org.springframework: INFO
-    com.example.converter: DEBUG
+    com.vitzemtsov: DEBUG
     org.apache.kafka: WARN
     io.minio: DEBUG
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: file-converter
+    version: 1.0.0
