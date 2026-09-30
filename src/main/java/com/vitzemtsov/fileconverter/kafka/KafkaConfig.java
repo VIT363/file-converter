@@ -18,26 +18,22 @@ public class KafkaConfig {
     private final KafkaTopicsProperties topicsProperties;
 
     @Bean
-    public NewTopic inputFileEventsTopic() {
-        return TopicBuilder.name(topicsProperties.getInputEvents())
-                .partitions(3)
-                .replicas(1)
-                .build();
+    public NewTopic toConvertTopic() {
+        return TopicBuilder.name(topicsProperties.getToConvert())
+                .partitions(3).replicas(1).build();
     }
 
     @Bean
-    public NewTopic outputFileEventsTopic() {
-        return TopicBuilder.name(topicsProperties.getOutputEvents())
-                .partitions(3)
-                .replicas(1)
-                .build();
+    public NewTopic convertedTopic() {
+        return TopicBuilder.name(topicsProperties.getConverted())
+                .partitions(3).replicas(1).build();
     }
 
     @Bean
     public DefaultErrorHandler kafkaErrorHandler() {
         ConsumerRecordRecoverer recoverer = (record, exception) ->
-                log.error("Пропускаем некорректное Kafka сообщение: topic={}, partition={}, offset={}",
-                        record.topic(), record.partition(), record.offset());
+                log.error("Сообщение потеряно после всех ретраев: topic={}, partition={}, offset={}, err={}",
+                        record.topic(), record.partition(), record.offset(), exception.getMessage());
 
         return new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3L));
     }

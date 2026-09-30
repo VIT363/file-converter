@@ -1,6 +1,6 @@
-package com.vitzemtsov.fileconverter.exception.retrayable.special;
+package com.vitzemtsov.fileconverter.exception.retryable.special;
 
-import com.vitzemtsov.fileconverter.exception.retrayable.TechnicalException;
+import com.vitzemtsov.fileconverter.exception.retryable.TechnicalException;
 
 public class ConversionException extends TechnicalException {
 

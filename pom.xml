@@ -13,6 +13,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <description>Event-driven file conversion service with Kafka, MinIO, and PDFBox</description>
     <properties>
+        <common-events.version>1.0.0</common-events.version>
         <okhttp.version>4.12.0</okhttp.version>
         <java.version>17</java.version>
         <minio.version>8.6.0</minio.version>
@@ -21,6 +22,11 @@
         <httpclient.version>4.5.13</httpclient.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.vitzemtsov.common</groupId>
+            <artifactId>common-events</artifactId>
+            <version>${common-events.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>

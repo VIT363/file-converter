@@ -1,16 +1,17 @@
 package com.vitzemtsov.fileconverter.inbox.consumer;
 
-import com.vitzemtsov.fileconverter.exception.nonretryable.ConfigurationException;
-import com.vitzemtsov.fileconverter.inbox.dto.MinioNotification;
-import com.vitzemtsov.fileconverter.inbox.enums.FailureType;
+import com.vitzemtsov.common.events.FileConversionRequest;
 import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
-import com.vitzemtsov.fileconverter.exception.retrayable.TechnicalException;
+import com.vitzemtsov.fileconverter.exception.nonretryable.ConfigurationException;
 import com.vitzemtsov.fileconverter.exception.nonretryable.UnsupportedFormatException;
-import com.vitzemtsov.fileconverter.inbox.enums.InboxStatus;
+import com.vitzemtsov.fileconverter.exception.retryable.TechnicalException;
 import com.vitzemtsov.fileconverter.inbox.entity.InboxMessage;
+import com.vitzemtsov.fileconverter.inbox.enums.FailureType;
+import com.vitzemtsov.fileconverter.inbox.enums.InboxStatus;
 import com.vitzemtsov.fileconverter.inbox.repository.InboxMessageRepository;
 import com.vitzemtsov.fileconverter.inbox.service.InboxCompletionService;
-import com.vitzemtsov.fileconverter.outbox.dto.PdfConvertedEvent;
+import com.vitzemtsov.fileconverter.outbox.service.OutboxService;
+import com.vitzemtsov.fileconverter.service.ConversionResult;
 import com.vitzemtsov.fileconverter.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,94 +29,66 @@ public class MinioKafkaConsumer {
     private final FileProcessingService fileProcessingService;
     private final InboxMessageRepository inboxRepository;
     private final InboxCompletionService inboxCompletionService;
+    private final OutboxService outboxService;
 
-    @KafkaListener(topics = "input-events")
-    public void consume(MinioNotification notification) {
+    @KafkaListener(topics = "#{@kafkaTopicsProperties.getToConvert()}")
+    public void consume(FileConversionRequest request) {
 
-        if (notification == null || notification.getRecords() == null || notification.getRecords().isEmpty()) {
-
-            log.warn("Получено пустое уведомление, игнорируем");
+        if (request == null || request.fileId() == null) {
+            log.warn("Пустое Kafka-сообщение, игнорируем");
             return;
         }
 
-        notification.getRecords().forEach(record -> {
-
-            String bucketName = record.getS3().getBucket().getName();
-
-            String objectName = record.getS3().getObject().getKey();
-
-            String eventId = record.getS3().getObject().getSequencer();
-
-            processEvent(record, bucketName, objectName, eventId);
-        });
-    }
-
-    private void processEvent(MinioNotification.Record record, String bucketName, String objectName, String eventId) {
+        String eventId = request.fileId().toString();
 
         Optional<InboxMessage> existing = inboxRepository.findByEventId(eventId);
-
         if (existing.isPresent() && existing.get().getStatus() == InboxStatus.PROCESSED) {
-
-            log.info("Событие уже обработано: eventId={}", eventId);
-
+            log.info("Событие уже обработано: fileId={}", request.fileId());
             return;
         }
 
-        InboxMessage inbox = existing.orElseGet(() -> createInboxMessage(record, eventId));
+        InboxMessage inbox = existing.orElseGet(() -> createInboxMessage(eventId));
 
         try {
-            PdfConvertedEvent result = fileProcessingService.processAndConvert(bucketName, objectName, eventId);
+            ConversionResult result = fileProcessingService.processAndConvert(
+                    request.fileId(), request.bucketName(), request.objectName());
 
-            inboxCompletionService.complete(inbox, result.bucketName(), result.objectName(), result.eventId());
+            inboxCompletionService.complete(inbox, result, request.fileId());
 
-            log.info("Файл успешно обработан: bucket={}, object={}, eventId={}", bucketName, objectName, eventId);
+            log.info("Файл успешно обработан: fileId={}, bucket={}, object={}",
+                    request.fileId(), request.bucketName(), request.objectName());
 
-        } catch (UnsupportedFormatException e) {
-
-            log.warn("Неподдерживаемый формат файла: {}", objectName);
-
+        } catch (UnsupportedFormatException | ConfigurationException e) {
+            log.warn("Non-retryable ошибка: fileId={}, msg={}", request.fileId(), e.getMessage());
             markFailed(inbox, e);
+            outboxService.createErrorEvent(request.fileId(), e.getMessage());
 
         } catch (TechnicalException e) {
-
-            log.error("Техническая ошибка обработки файла: {}/{}", bucketName, objectName, e);
-
+            log.error("Техническая ошибка, будет ретрай: fileId={}", request.fileId(), e);
             markFailed(inbox, e);
-            throw e;
-        } catch (
-                ConfigurationException e) {
-            log.error("Ошибка конфигурации: {}", e.getMessage());
-
-            markFailed(inbox, e);
+            throw e; // Kafka повторит, outbox НЕ пишем
         }
     }
 
-    private InboxMessage createInboxMessage(MinioNotification.Record record, String eventId) {
-
+    private InboxMessage createInboxMessage(String eventId) {
         InboxMessage message = new InboxMessage();
-
         message.setEventId(eventId);
-        message.setEventType(record.getEventName());
+        message.setEventType("FILE_CONVERSION_REQUESTED");
         message.setStatus(InboxStatus.PROCESSING);
         message.setProcessingStartedAt(LocalDateTime.now());
-
         return inboxRepository.save(message);
     }
 
     private void markFailed(InboxMessage inbox, FileConverterException exception) {
-
         inbox.setStatus(InboxStatus.FAILED);
         inbox.setLastError(exception.getMessage());
 
-        FailureType type;
-        if (exception instanceof UnsupportedFormatException || exception instanceof ConfigurationException) {
-            type = FailureType.BUSINESS;
-        } else {
-            type = FailureType.TECHNICAL;
-        }
+        FailureType type = (exception instanceof UnsupportedFormatException
+                || exception instanceof ConfigurationException)
+                ? FailureType.BUSINESS
+                : FailureType.TECHNICAL;
 
         inbox.setFailureType(type);
         inboxRepository.save(inbox);
     }
 }
-
