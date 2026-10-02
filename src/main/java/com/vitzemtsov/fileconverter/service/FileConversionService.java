@@ -1,4 +1,4 @@
-package com.vitzemtsov.fileconverter.inbox.consumer;
+package com.vitzemtsov.fileconverter.service;
 
 import com.vitzemtsov.common.events.FileConversionRequest;
 import com.vitzemtsov.fileconverter.exception.basic.FileConverterException;
@@ -11,28 +11,24 @@ import com.vitzemtsov.fileconverter.inbox.enums.InboxStatus;
 import com.vitzemtsov.fileconverter.inbox.repository.InboxMessageRepository;
 import com.vitzemtsov.fileconverter.inbox.service.InboxCompletionService;
 import com.vitzemtsov.fileconverter.outbox.service.OutboxService;
-import com.vitzemtsov.fileconverter.service.ConversionResult;
-import com.vitzemtsov.fileconverter.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
-public class MinioKafkaConsumer {
+public class FileConversionService {
 
     private final FileProcessingService fileProcessingService;
     private final InboxMessageRepository inboxRepository;
     private final InboxCompletionService inboxCompletionService;
     private final OutboxService outboxService;
 
-    @KafkaListener(topics = "#{@kafkaTopicsProperties.getToConvert()}")
-    public void consume(FileConversionRequest request) {
+    public void handle(FileConversionRequest request) {
 
         if (request == null || request.fileId() == null) {
             log.warn("Пустое Kafka-сообщение, игнорируем");
@@ -66,7 +62,7 @@ public class MinioKafkaConsumer {
         } catch (TechnicalException e) {
             log.error("Техническая ошибка, будет ретрай: fileId={}", request.fileId(), e);
             markFailed(inbox, e);
-            throw e; // Kafka повторит, outbox НЕ пишем
+            throw e;
         }
     }
 
