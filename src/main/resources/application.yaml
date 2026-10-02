@@ -1,39 +1,6 @@
-app:
-  outbox:
-    fixed-delay: 1000
-  pdf:
-    font-path: classpath:fonts/arialmt.ttf
-
-server:
-  port: 8080
-
 spring:
   application:
     name: file-converter
-
-  liquibase:
-    enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-
-  kafka:
-    topics:
-      output-events: output-events
-      input-events: input-events
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:host.docker.internal:29092}
-    consumer:
-      group-id: file-converter-group
-      auto-offset-reset: earliest
-      enable-auto-commit: false
-      max-poll-records: 1
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-      properties:
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.value.default.type: com.vitzemtsov.fileconverter.inbox.dto.MinioNotification
-        spring.json.trusted.packages: com.vitzemtsov.fileconverter
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:file_converter_db}
@@ -46,24 +13,54 @@ spring:
       ddl-auto: none
     open-in-view: false
 
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:file-converter-group}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 1
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: com.vitzemtsov.common.events.FileConversionRequest
+        spring.json.trusted.packages: com.vitzemtsov.fileconverter,com.vitzemtsov.common.events
+
+server:
+  port: ${SERVER_PORT:8080}
+
+kafka:
+  topics:
+    to-convert: ${KAFKA_TOPIC_TO_CONVERT:to-convert}
+    converted: ${KAFKA_TOPIC_CONVERTED:converted}
+
 minio:
-  endpoint: http://${MINIO_HOST:localhost}:${MINIO_PORT:9000}
-  bucket: files
-  result-bucket: pdf-files
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:files}
+  result-bucket: ${MINIO_RESULT_BUCKET:pdf-files}
 
-logging:
-  level:
-    org.springframework: INFO
-    com.vitzemtsov: DEBUG
-    org.apache.kafka: WARN
-    io.minio: DEBUG
+app:
+  outbox:
+    fixed-delay: ${OUTBOX_FIXED_DELAY:1000}
+  pdf:
+    font-path: classpath:fonts/arialmt.ttf
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}
@@ -76,6 +73,13 @@ management:
   info:
     env:
       enabled: true
+
+logging:
+  level:
+    com.vitzemtsov: DEBUG
+    org.springframework: INFO
+    org.apache.kafka: WARN
+    io.minio: DEBUG
 
 info:
   app:

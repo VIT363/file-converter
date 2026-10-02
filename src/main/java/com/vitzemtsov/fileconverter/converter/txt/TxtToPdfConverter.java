@@ -4,7 +4,7 @@ import com.vitzemtsov.fileconverter.config.AppProperties;
 import com.vitzemtsov.fileconverter.converter.interfaces.FileToPdfStrategy;
 import com.vitzemtsov.fileconverter.converter.util.FileType;
 import com.vitzemtsov.fileconverter.exception.nonretryable.ConfigurationException;
-import com.vitzemtsov.fileconverter.exception.retrayable.special.ConversionException;
+import com.vitzemtsov.fileconverter.exception.retryable.special.ConversionException;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;

@@ -5,9 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "spring.kafka.topics")
+@ConfigurationProperties(prefix = "kafka.topics")
 @Data
 public class KafkaTopicsProperties {
-    private String inputEvents;
-    private String outputEvents;
+    private String toConvert;
+    private String converted;
 }
