@@ -5,8 +5,6 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
       - "2181:2181"
-    networks:
-      - file-converter_app-net
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
@@ -15,26 +13,14 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-
-      # INTERNAL: для других контейнеров (MinIO)
-      # EXTERNAL: для приложения на хосте (IntelliJ)
       KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092
-
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
-
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      # Отключаем лишние метрики для чистоты логов
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: ''
     ports:
-      # Пробрасываем только внешний порт для хоста.
-      # Внутренний (9092) нужен только внутри сети Docker, его пробрасывать не надо.
       - "29092:29092"
-    networks:
-      - file-converter_app-net
 
   minio:
     image: minio/minio:${MINIO_VERSION}
@@ -52,8 +38,6 @@ services:
       - minio_data:/data
     depends_on:
       - kafka
-    networks:
-      - file-converter_app-net
 
   postgres:
     image: postgres:15-alpine
@@ -66,15 +50,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - file-converter_app-net
 
 volumes:
   minio_data:
   postgres_data:
 
 networks:
-  file-converter_app-net:
-      driver: bridge
-
-
+  default:
+    name: microservices-net
+    external: true

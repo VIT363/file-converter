@@ -27,3 +27,42 @@ Kafka и MinIO поднимаются в Docker-контейнерах.
 
 Этот сервис — часть реализации паттерна SAGA: он выполняет свой локальный шаг (конвертацию) и сообщает о результате (успех/ошибка) событием, 
 по которому дальше двигается вся цепочка обработки файла.
+
+## Требования к настоящему приложению:
+- JDK 17+
+- IntelliJ IDEA (для запуска Spring Boot-приложений)
+
+## Первый запуск
+### 1. Создать общую Docker-сеть (один раз)
+
+Все контейнеры (Keycloak, Kafka, MinIO, Postgres) подключаются к общей сети 'microservices-net':
+
+    docker network create microservices-net
+
+### 2. Поднять инфраструктуру
+
+В репозитории 'api-gateway':
+
+    cp .env.example .env d (при необходимости)
+    docker compose up -d
+
+В репозитории 'file-converter':
+
+    docker compose up -d
+
+Обе группы контейнеров окажутся в одной сети и смогут обращаться друг к другу по именам сервисов ('keycloak', 'kafka', 'minio', 'postgres').
+
+### 3. Запуск Spring Boot-приложения
+
+Порядок запуска:
+
+1. 'discovery-server' (порт 8761)
+2. 'flow-manager' (порт 8081)
+3. 'file-converter' (порт 8083)
+4. 'api-gateway' (порт 8082)
+
+### 4. Проверка
+
+- Eureka: http://localhost:8761
+- Keycloak Admin: http://localhost:8080/admin (admin/admin)
+- MinIO Console: http://localhost:9001
